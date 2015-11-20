@@ -1,6 +1,9 @@
 # Specific #
+.gitignore
 .*    #no hiden file
-*~    #nobackup file of emacs
+*.*~    #nobackup file of emacs
+*.csv    #data
+*.tsv    #data
 
 # Compiled source #  
 *.com    
