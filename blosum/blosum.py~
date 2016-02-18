@@ -1,0 +1,8 @@
+#! /usr/bin/python3
+
+#####Calculate the BLOSUM matrics
+#####Author: Wolfson
+#####Date: 20151017
+
+
+t = w*n*(n-1)/2
