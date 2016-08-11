@@ -76,6 +76,7 @@ termPlot <- function(data,
             legend.position  = "none",
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
+            panel.background = element_blank(),
             axis.ticks       = element_blank()) +
         xlab(xlab) + ylab(ylab) + ggtitle(title) + 
         coord_flip() +
@@ -85,6 +86,20 @@ termPlot <- function(data,
 ###}}}
 }
 
+clustChangeFactorOrder <- function(data, 
+                                   factor) {
+###{{{
+
+    ## data is used to clust
+    ## factor is usde to change
+    clust.object <- hclust(dist(data))
+    factor(
+        factor,
+        clust.object$labels[clust.object$order],
+        ordered = TRUE)        
+
+###}}}
+}
 
 heatMapPlot <- function(data,
                         xlab.size  = 15,
@@ -93,6 +108,7 @@ heatMapPlot <- function(data,
                         xlab.color = "black",
                         ylab.size  = 15,
                         ylab.angle = 0,
+                        ylab.hjust = 0,
                         ylab.vjust = 0,
                         ylab.color = "black",
                         xcluster   = FALSE,
@@ -101,57 +117,48 @@ heatMapPlot <- function(data,
                         yorder     = "",
                         color      = "") {
 ###{{{
+
     if (!is.matrix(data)) {
         ## Input data should be a matrix with rownames.
         stop("Please enter a numeric matrix with rownames as input data.")
     }
     melt.data <- reshape2::melt(data)
-    clustChangeFactorOrder <- function(data, 
-                                       factor) {
-        ## data is used to clust
-        ## factor is usde to change
-        clust.object <- hclust(dist(data))
-        factor(
-            factor,
-            clust.object$labels[clust.object$order],
-            ordered = TRUE)        
-    }
     if (sum(nchar(xorder) != 0) != 0 & xcluster) {
         stop("Please choose either using cluster or using order, not both.")
-    }
+    } else {}
     if (sum(nchar(yorder) != 0) != 0 & ycluster) {
         stop("Please choose either using cluster or using order, not both.")
-    }
+    } else {}
     if (xcluster) {
         melt.data$Var2 <- clustChangeFactorOrder(data, melt.data$Var2)
-    }
+    } else {}
     if (ycluster) {
         melt.data$Var1 <- clustChangeFactorOrder(data, melt.data$Var1)
-    }    
+    } else {}
     if (sum(nchar(xorder) != 0) != 0) {
-        if (length(xorder != length(levels(melt.data$Var2)))) {
+        if (length(xorder) != length(unique(as.character((melt.data$Var2))))) {
             stop("Order of x not the same lenght with level of x.")
-        }        
+        } else {}    
         melt.data$Var2 <- factor(
             melt.data$Var2,
             xorder,
             ordered = TRUE)
-    }
+    } else {}
     if (sum(nchar(yorder) != 0) != 0) {
-        if (length(yorder != length(levels(melt.data$Var1)))) {
+        if (length(yorder) != length(unique(as.character((melt.data$Var1))))) {
             stop("Order of y not the same lenght with level of y.")
-        }        
+        } else {}    
         melt.data$Var1 <- factor(
             melt.data$Var1,
             yorder,
             ordered = TRUE)
-    }
-    if (length(color) == 1 & nchar(color) == 0) {
+    } else {}
+    if (length(color) == 1 & sum(nchar(color)) == 0) {
         ## Setting color palette.
         palette.setting <- scale_fill_gradient(
             low  = "white",
             high = "red")
-    } else if (length(color) == 1 & nchar(color) != 0) {
+    } else if (length(color) == 1 & sum(nchar(color)) != 0) {
         palette.setting <- scale_fill_gradient(
             low  = "white",
             high = color[1])
@@ -182,6 +189,7 @@ heatMapPlot <- function(data,
                   vjust  = xlab.vjust,
                   colour = xlab.color),
               axis.text.y      = element_text(
+                  hjust  = ylab.hjust,
                   size   = ylab.size,
                   angle  = ylab.angle,
                   vjust  = ylab.vjust,
@@ -189,6 +197,7 @@ heatMapPlot <- function(data,
               axis.title       = element_blank(),
               plot.title       = element_blank())
     p
+    
 ###}}}
 }
 
@@ -197,6 +206,8 @@ plotDodgeBarplot <- function(data,
                              xlab.size  = 10,
                              xlab.angle = 45,
                              xlab.vjust = 0.4) {
+###{{{
+
     p.data <- melt(data)
     p <- ggplot(
         p.data,
@@ -215,6 +226,8 @@ plotDodgeBarplot <- function(data,
                 vjust  = xlab.vjust
             )
         )
+
+###}}}
 }
 
 
