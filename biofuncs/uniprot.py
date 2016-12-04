@@ -1,5 +1,6 @@
 #! /bin/env python3
 
+# ------------------------------------------------------------------------------
 # packages
 import os, sys, re
 import numpy as np
@@ -9,8 +10,64 @@ import urllib.request as url
 from Bio import SeqIO
 from Bio import Seq
 from io import StringIO
+
 # ------------------
-from biofuncs import gfftable
+def gfftable(filename, fileformat, columns):
+    '''Parse gff3 or gtf file into pandas DataFrame.'''
+    # {{{
+
+    if fileformat == 'gtf': # make different separation according to fileformat.
+        sep1, sep2 = ' "', '";'
+    elif fileformat == 'gff':
+        sep1, sep2 = '=', ';'
+    data = pd.read_table(
+        filename,
+        sep     = '\t',
+        header  = None,
+        names   = columns,
+        index_col = False,
+        comment = '#'
+    )                           # read gtf/gff data
+    attr_split = data[columns[-1]].apply(
+        lambda row: [x.split(sep1)
+                     for x in row.split(sep2) if len(x) > 2]
+    )                      # split the attributes in attribute columns
+    attr_dict = attr_split.apply(
+        lambda row: dict(
+            zip(
+                [x[0].strip() for x in row],
+                [x[1].strip() for x in row]
+            )
+        )
+    )                           # make splited attributes into dicts
+    attr_columns = attr_dict.apply(
+        lambda row: list(row.keys())
+    ).tolist()                  # get attr columns names
+    attr_names = list(
+        set([
+            attr_columns[i][j] for i in range(len(attr_columns))
+            for j in range(len(attr_columns[i]))
+        ])
+    )                           # get attr columns names
+    attr = pd.DataFrame(
+        dict(
+            zip(
+                attr_names,
+                [
+                    pd.Series(
+                        [x[attr_name] if attr_name in x else np.NaN
+                         for x in attr_dict]
+                    ) for attr_name in attr_names
+                ]
+            )
+        )
+    )                           # make attr columns
+    data = data.join(
+        attr
+    )                           # link attr columns with annotation.
+    return data
+
+    # }}}
 
 
 # ------------------------------------------------------------------------------
@@ -22,16 +79,15 @@ class UniAPI:
     # {{{
 
     '''
-UniAPI is used to abtain information from uniprot website using uniprot API.
-
-UniAPI is the basic of several other classes.
-'''
+    UniAPI is used to abtain information from uniprot website using uniprot API.
+    UniAPI is the basic of several other classes.'''
     def __init__(self, part = 'uniprot'):
         self._web = 'http://www.uniprot.org/'
         if part not in ['uniprot', 'uniparc', 'uniref', 'taxonomy',
                         'locations', 'diseases']:
             raise ValueError(
-                'Wrong value for "part" parameter: {0:s}. \n("part" should be in ["uniprot", "uniparc", "uniref"])'.format(part)
+                'Wrong value for "part" parameter: {0:s}. \n' +
+                '("part" should be in ["uniprot", "uniparc", "uniref"])'.format(part)
             )
         self._web = self._web + part
 
@@ -139,8 +195,8 @@ class UniQuery(UniAPI):
     # {{{
 
     '''
-UniQuery is used to query from uniprot by url. The query string must be appropriate.
-'''
+    UniQuery is used to query from uniprot by url. 
+    The query string must be appropriate.'''
     uniprot_format = [
         'html', 'tab', 'xls', 'fasta', 'gff',
         'txt', 'xml', 'rdf', 'list', 'rss'
@@ -373,8 +429,7 @@ UniQuery is used to query from uniprot by url. The query string must be appropri
         
     def __make_url(self):
         '''
-Make the whole url to query. Without change into percent encode.
-'''
+        Make the whole url to query. Without change into percent encode.'''
         self._url = ''.join(
             [self._web,
              '/?query=', self._query if self._query != '' else '*',
@@ -392,9 +447,7 @@ Make the whole url to query. Without change into percent encode.
         return self._url
     
     def reset_query(self, query, **kargs):
-        '''
-Modify query.
-'''
+        '''Modify query.'''
         self._query = '+'.join(
             [query,
              '+'.join(
