@@ -13,4 +13,6 @@ Biotools are some little programs writen by Wolfson to solve some small problems
 * bioapi: connect bioinformatics database.
 * biofuncs: python functions.
 * rna_seq: RNA-Seq analysis scripts, including bash scripts using tuxedo softwares and R scripts for analysis and visualization. 
+* tailorbird: Multiple processing DNA sequence with GUI.
+* woodpecker: batch download papers by doi from Sci-Hub.
 

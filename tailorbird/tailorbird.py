@@ -1,5 +1,5 @@
 # ------------------
-# Sequence Tailorbird
+# Tailorbird
 # ------------------
 # Author: Wolfson Liu
 # Date: 2017.12.01
@@ -10,7 +10,7 @@
 
 import tkinter as tk
 
-__version__ = 0.1.2017.12.01
+__version__ = '0.1.2017.12.01'
 
 def complement(sequence):
     if not isinstance(sequence, str):
@@ -34,7 +34,7 @@ def reverse_complement(sequence):
     return result
 
 
-class MyGUI(tk.Frame):
+class Tailorbird(tk.Frame):
     def __init__(self, master):
         super().__init__(master)
         self.pack()
@@ -207,8 +207,8 @@ class MyGUI(tk.Frame):
 
 if __name__ == '__main__':
     root = tk.Tk()
-    root.title('>>> 西昆斯缝叶莺 =*= Sequence Tailorbird <<<')
-    app = MyGUI(root)
+    root.title('Tailorbird')
+    app = Tailorbird(root)
     root.mainloop()
 
 # ------------------
