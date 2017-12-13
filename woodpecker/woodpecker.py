@@ -28,9 +28,9 @@ class ArticleNotFound(ValueError):
 
 scihubs = [
     'http://www.sci-hub.tw/',
+    'http://www.sci-hub.hk/',
     'http://www.sci-hub.cc/',
     'http://www.sci-hub.bz/',
-    'http://www.sci-hub.hk/',
 ]
 
 
@@ -43,11 +43,10 @@ def getscihub(scihubs):
             continue
     return sh
 
-goodscihub = getscihub(scihubs)
 
 def scihub_pdfurl(doi, scihub):
     # get scihub pdf url
-    shpage = requests.get(scihub + doi)
+    shpage = requests.get('/'.join([scihub.rstrip('/'), doi]))
     if shpage.status_code != 200:
         raise SciHubError('Sci-Hub website unaccessible.')
     if shpage.text.find('article not found') > 0:
@@ -117,28 +116,38 @@ class Woodpecker(tk.Frame):
         self.data = dict()
         super().__init__(master)
         self.pack()
+        scihub_entry_frame = tk.Frame(self)
+        scihub_entry_frame.grid(row=0, column=0, ipadx=2, ipady=2, padx=2, pady=2)
+        self.scihub_label = tk.Label(
+            scihub_entry_frame, text='Sci-Hub 网址'
+        )
+        self.scihub_label.pack(side=tk.LEFT)
+        self.scihub_entry = tk.Entry(
+            scihub_entry_frame, width=30
+        )
+        self.scihub_entry.pack(side=tk.RIGHT)
         self.doi_textbox = textbox(
             self,
             'DOI 输入框',
             width=40, textwrap=tk.NONE,
-            row=0, column=0
+            row=1, column=0
         )
         path_entry_frame = tk.Frame(self)
-        path_entry_frame.grid(row=1, column=0)
+        path_entry_frame.grid(row=2, column=0, ipadx=2, ipady=2, padx=2, pady=2)
         self.path_label = tk.Label(
             path_entry_frame, text='保存路径'
         )
-        self.path_label.pack(anchor=tk.W)
+        self.path_label.pack(side=tk.LEFT)
         self.path_entry = tk.Entry(
             path_entry_frame, width=30
         )
-        self.path_entry.pack(anchor=tk.E)
+        self.path_entry.pack(side=tk.RIGHT)
         self.execute_button = tk.Button(
             self,
             text='Woodpecker!',
             command=self.button_execute
         )
-        self.execute_button.grid(row=2, column=0)
+        self.execute_button.grid(row=3, column=0)
 
     def button_execute(self):
         self.data['dois'] = self.doi_textbox.get(
@@ -146,11 +155,18 @@ class Woodpecker(tk.Frame):
             tk.END
         ).rstrip().lower().split('\n')
         self.data['dir'] = self.path_entry.get()
+        self.data['scihub'] = self.scihub_entry.get()
+        if self.data['scihub'] == '':
+            self.data['scihub'] = getscihub(scihubs)
+        elif (self.data['scihub'].find('http://') < 0) and (self.data['scihub'].find('https://') < 0):
+            self.data['scihub'] = 'https://' + self.data['scihub']
+            self.data['scihub'] = self.data['scihub'].replace('www.', '')
+        print(self.data['scihub'])
         self.data['log'] = list()
         for doi in self.data['dois']:
             try:
                 try:
-                    pdfurl = scihub_pdfurl(doi, goodscihub)
+                    pdfurl = scihub_pdfurl(doi, self.data['scihub'])
                     pdf = requests.get(pdfurl)
                     pdfname = os.path.join(
                         self.data['dir'],
