@@ -183,7 +183,7 @@ class Woodpecker(tk.Frame):
                             ]
                         )
                     )
-                except (ConnectionError, SciHubError):
+                except (ConnectionError, SciHubError) as e:
                     massagebox(
                         self,
                         'Sci-Hub 无法链接，如果确定网络没有问题，那说明 Sci-Hub 暂时被封了，请下载新版本或者联系本软件作者 wolfsonliu@gmail.com。'

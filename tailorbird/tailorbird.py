@@ -10,7 +10,7 @@
 
 import tkinter as tk
 
-__version__ = '0.1.2017.12.01'
+__version__ = '0.1.2018.04.07'
 
 def complement(sequence):
     if not isinstance(sequence, str):
@@ -19,18 +19,15 @@ def complement(sequence):
         'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G',
         'a': 't', 't': 'a', 'g': 'c', 'c': 'g'
     }
-    result = ''.join([atcg[x] for x in sequence])
+    result = ''.join([atcg.get(x, x) for x in sequence])
     return result
 
 
 def reverse_complement(sequence):
     if not isinstance(sequence, str):
         raise ValueError('Sequence should be string.')
-    atcg = {
-        'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G',
-        'a': 't', 't': 'a', 'g': 'c', 'c': 'g'
-    }
-    result = ''.join([atcg[x] for x in sequence][::-1])
+    _comp = complement(sequence)
+    result = _comp[::-1]
     return result
 
 
