@@ -2,15 +2,13 @@
 #-*-coding:utf-8-*-
 
 ##### Main file to display chromosome information
-##### Author: Wolfson
-##### Date: 20151029
 
 source("./chromosome_display.R")
-setwd("/lustre/user/liclab/lisky/liuzh/scripts/nucleolus/display_chromosome")
 
 ##### File names
 
-nemethnadfile <- "nemethnad.csv"
+hubfile <- "hub.csv"
+hotfile <- 't.csv'
 satellitefile <- "satellite.tsv"
 rRNAfile <- "rRNA.tsv"
 tRNAfile <- "tRNA.tsv"
@@ -18,113 +16,109 @@ genomefile <- "ge.csv"
 
 ##### Read file
 
-nemethnad_r <- read.csv(nemethnadfile, 
-                        header = TRUE)
-nemethaCGH <- rbind(nemethnad_r[nemethnad_r$detection_method == "aCGH",],
-                    nemethnad_r[nemethnad_r$detection_method == "aCGH/sequencing",])
-nemethseq <- rbind(nemethnad_r[nemethnad_r$detection_method == "sequencing",],
-                    nemethnad_r[nemethnad_r$detection_method == "aCGH/sequencing",])
-satellite_r <- read.csv(satellitefile, 
-                        header = TRUE, 
-                        sep    = '\t')
-rRNA_r <- read.csv(rRNAfile, 
-                   header = TRUE, 
-                   sep    = '\t')
-tRNA_r <- read.csv(tRNAfile, 
-                   header = TRUE, 
-                   sep    = '\t')
-genome_r <- read.csv(genomefile, 
-                     header = TRUE)
+hub <- read.csv(
+    hubfile,
+    header=FALSE,
+    stringsAsFactors=FALSE
+)
+colnames(hub) <- c(
+    'chromosome', 'start', 'end', 'V4', 'V5', 'count',
+    'V8', 'V9', 'V10', 'V11', 'V12', 'V13'
+)
+
+hot <- read.csv(
+    hotfile,
+    header=TRUE,
+    stringsAsFactors=FALSE
+)
+
+tophub <- hub[sample(seq(1139), 20), ]
+
+tophub$end <- tophub$end + 1000000
 
 
-binsize <- c("1000", 
-             "10000", 
-             "100000", 
-             "250000", 
-             "50000", 
-             "500000")
-bin <- list()    # reference genome without mask.
-for (m in binsize){
-  bin[[m]] <- read.csv(paste(m, ".csv", sep = ''), header = FALSE)
-  names(bin[[m]]) <- c("chromosome", 
-                       "start", 
-                       "end", 
-                       "count")
-  levels(bin[[m]]$chromosome) <- paste("chr",levels(bin[[m]]$chromosome), sep = "")
-}
-binm <- list()
-for (m in binsize){
-  binm[[m]] <- read.csv(paste("m", m, ".csv", sep = ''), header = FALSE)
-  names(binm[[m]]) <- c("chromosome", 
-                        "start", 
-                        "end", 
-                        "count")
-  levels(binm[[m]]$chromosome) <- paste("chr",levels(binm[[m]]$chromosome), sep = "")
-}
 
-bincom <- list()    # reference genome with repeats mask.
-for (m in binsize) {
-  bincom[[m]]$toplevel <- read.csv(paste(m, ".csv", sep = ''), 
-                                   header = FALSE)
-  names(bincom[[m]]$toplevel) <- c("chromosome", 
-                                   "start", 
-                                   "end", 
-                                   "count")
-  bincom[[m]]$mask <- read.csv(paste("m",m, ".csv", sep = ''), 
-                               header = FALSE)
-  names(bincom[[m]]$mask) <- c("chromosome", 
-                               "start", 
-                               "end", 
-                               "count")
-}
+nemethaCGH <- rbind(
+    nemethnad_r[nemethnad_r$detection_method == "aCGH",],
+    nemethnad_r[nemethnad_r$detection_method == "aCGH/sequencing",]
+)
+nemethseq <- rbind(
+    nemethnad_r[nemethnad_r$detection_method == "sequencing",],
+    nemethnad_r[nemethnad_r$detection_method == "aCGH/sequencing",]
+)
+satellite_r <- read.csv(
+    satellitefile,
+    header = TRUE,
+    sep    = '\t'
+)
+rRNA_r <- read.csv(
+    rRNAfile,
+    header = TRUE,
+    sep    = '\t'
+)
+tRNA_r <- read.csv(
+    tRNAfile,
+    header = TRUE,
+    sep    = '\t'
+)
+genome_r <- read.csv(
+    genomefile,
+    header = TRUE
+)
 
 
 ##### Format genome information
 
-genome <- genomeInformation(data         = genome_r,
-                             cnchr        = 1,
-                             cncentrstart = 2,
-                             cncentrend   = 3,
-                             cnlength     = 4)
+genome <- data.frame(
+    chromosome=c(paste0('chr', seq(1, 22)), 'chrX', 'chrY'),
+    length=c(
+        249250621, 243199373, 198022430, 191154276, 180915260,
+        171115067, 159138663, 146364022, 141213431, 135534747,
+        135006516, 133851895, 115169878, 107349540, 102531392,
+        90354753, 81195210, 78077248, 59128983, 63025520,
+        48129895, 51304566, 155270560, 59373566
+    ),
+    centromerestart=c(
+        121535434, 92326171, 90504854, 49660117, 46405641,
+        58830166, 58054331, 43838887, 47367679, 39254935,
+        51644205, 34856694, 16000000, 16000000, 17000000,
+        35335801, 22263006, 15460898, 24681782, 26369569,
+        11288129, 13000000, 58632012, 10104553
+    ),
+    centromereend=c(
+        124535434, 95326171, 93504854, 52660117, 49405641,
+        61830166, 61054331, 46838887, 50367679, 42254935,
+        54644205, 37856694, 19000000, 19000000, 20000000,
+        38335801, 25263006, 18460898, 27681782, 29369569,
+        14288129, 16000000, 61632012, 13104553
+    )
+)
 
-##### Format data to be paint 
+##### Format data to be paint
 
-paintdata <- list(nemethnad_r, satellite_r)    #, rRNA_r)
-paintdataname <- c("nemethnad", "satellite")    #, "rDNA")
+paintdata <- list(hub, tophub)    #, rRNA_r)
+paintdataname <- c("Hub", 'selected Hub')    #, "rDNA")
 # [name][chromosome][start][end]
-paintdatacol <- rbind(c(5, 1, 2, 3),
-                      c(12, 6, 7, 8))    #,c(12, 6, 7, 8))
-data <- domainDataList(data     = paintdata,
-                       dataname = paintdataname,
-                       datacol  = paintdatacol)
-### Generate compair data
-paintdata1 <- list(nemethaCGH, satellite_r)    #, rRNA_r)
-paintdataname1 <- c("nemethaCGH", "satellite")    #, "rDNA")
-# [name][chromosome][start][end]
-paintdatacol <- rbind(c(5, 1, 2, 3),
-                      c(12, 6, 7, 8))    #, c(12, 6, 7, 8))
-data1 <- domainDataList(data     = paintdata1,
-                        dataname = paintdataname1,
-                        datacol  = paintdatacol)
-
-paintdata2 <- list(nemethseq, satellite_r)    #, rRNA_r)
-paintdataname2 <- c("nemethseq", "satellite")    #, "rDNA")
-# [name][chromosome][start][end]
-paintdatacol <- rbind(c(5, 1, 2, 3),
-                      c(12, 6, 7, 8))    #, c(12, 6, 7, 8))
-data2 <- domainDataList(data     = paintdata2,
-                        dataname = paintdataname2,
-                        datacol  = paintdatacol)
-#datac <- list()
-#datac$aCGH <- data1
-#datac$seq <- data2
-
+paintdatacol <- rbind(
+    c(12, 1, 2, 3),
+    c(12, 1, 2, 3)
+)    #,c(12, 6, 7, 8))
+data <- domainDataList(
+    data=paintdata,
+    dataname=paintdataname,
+    datacol=paintdatacol
+)
 ##### Paint the chromosomes
 
-chromosomePlotRect(data      = data,
-                   picname   = "chrbar.jpg",
-                   reference = genome,
-                   reverse   = TRUE)
+chromosomePlotRect(
+    data=data,
+    picname="chrbar.jpg",
+    reference=genome,
+    reverse=TRUE,
+    chrcol='grey65',
+    cencol='grey80',
+    datacol=c('blue', 'red')
+)
 
 
 ##### Paint the reads

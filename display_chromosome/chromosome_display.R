@@ -124,19 +124,27 @@ chooseFunction <- function(filename,    # filename.
 
 ##### Function-startPicture: change the picture output type.
 
-startPicture <- function(filename, 
-                         width=800, 
-                         height=600, 
-                         units="px")
-{ # this function is used to change different kinds of pictures.
-  # remember to dev.off() after the picture.
-  picfunc <- chooseFunction(filename = filename, 
-                            funcs    = c(jpeg, png, tiff, bmp), 
-                            words    = c("jpg", "png", "tiff", "bmp"))
-  picfunc(filename = filename,    # file name, end with picture style.
-          width    = width,    # width.
-          height   = height,    # height.
-          units    = units)    # unit for width and height, usually "px".
+startPicture <- function(filename,
+                         width=800,
+                         height=600,
+                         ...) {
+                                        # this function is used to change different kinds of pictures.
+                                        # remember to dev.off() after the picture.
+    if (unlist(strsplit(filename, '[.]'))[-1] == 'pdf') {
+        pdf(filename, width=width/72, height=height/72)
+    } else {
+        picfunc <- chooseFunction(
+            filename=filename,
+            funcs=c(jpeg, png, tiff, bmp),
+            words=c("jpg", "png", "tiff", "bmp")
+        )
+        picfunc(
+            filename=filename,    # file name, end with picture style.
+            width=width,    # width.
+            height=height,    # height.
+            ...
+        )
+    }
 }
 
 
@@ -185,12 +193,12 @@ dataMerge <- function(binread,
     bintableend[bintableend$V2 ==  n, 3] <- endcount
   }
   tmp <- rbind(bintablestart, bintableend)
-  names(tmp) <- c("chromosome", 
-                  "site", 
+  names(tmp) <- c("chromosome",
+                  "site",
                   "count")
   reads <- tmp[order(tmp$site),]    # make the data frame with a right order.
   ### Remove useless data, maybe no use.
-  rm(chrseq)    
+  rm(chrseq)
   rm(startseq)
   rm(endseq)
   rm(tmp)
@@ -225,7 +233,7 @@ chromosomeDataPeak <- function(data,    # data should only include information o
   names(data) <- nam
   #data <- dataFrameValueNorm(data, 4)
   normthreshold <- summary(data$count)[5] * 0.7 + summary(data$count)[6] * 0.3    # 3rd quartile to do the normalization.
-  tmp <- cbind(as.data.frame(character()),    
+  tmp <- cbind(as.data.frame(character()),
                start=integer(),
                end=integer(),
                count=integer())
@@ -248,7 +256,7 @@ chromosomeDataPeak <- function(data,    # data should only include information o
 chromosomeCallPeak <- function(data,    # data frame of bin reads, [chromosome, start, end, count].
                                nam=c("chromosome", "start", "end", "count"),    # order: chr start count.
                                chrname=0,    # the list of chromosomes to be paint with reversed order.
-                               reverse=FALSE)   
+                               reverse=FALSE)
 {
   if (chrname == 0) {
     chrname <- chromosomesName(reverse = reverse)    # chrname is the vector of chromosome names.
@@ -256,7 +264,7 @@ chromosomeCallPeak <- function(data,    # data frame of bin reads, [chromosome, 
   # initiate temporary data frames to store peaks information.
   # tmpdf1 is used to store peaks data.
   # tmpdf2 is used to store regions data.
-  tmpdf2 <- cbind(as.data.frame(character()),    
+  tmpdf2 <- cbind(as.data.frame(character()),
                   start=integer(),
                   end=integer(),
                   count=integer())
@@ -290,7 +298,7 @@ chromosomeCallPeak <- function(data,    # data frame of bin reads, [chromosome, 
         tmpdf2[tmpdf2$chromosome == chri,][tmpdf2row, "end"] <- tmpdf1[n, "end"]
         next
       }
-      tmpdf2 <- rbind(tmpdf2, tmpdf1[tmpdf1$chromosome == chri,][n,]) 
+      tmpdf2 <- rbind(tmpdf2, tmpdf1[tmpdf1$chromosome == chri,][n,])
     }
     #cat("end", chri, "\n")
   }
@@ -298,10 +306,11 @@ chromosomeCallPeak <- function(data,    # data frame of bin reads, [chromosome, 
 }
 ##### Function-chromosomePlotRect: paint chromomes with different kinds of units with bar.
 
+
 chromosomePlotRect <- function(data,    # list of units to paint.
                                reference,    # reference genome informations, use genome_information() to load genome information first.
                                datacol=c("red", "royalblue4", "darkolivegreen", "blanchedalmond"),
-                               chrname=0,    # the list of chromosomes to be paint with reversed order.
+                               chrname=NULL,    # the list of chromosomes to be paint with reversed order.
                                chrcol="deepskyblue",    # color of chromosomes.
                                cencol="darkorange",    # color of centromeres.
                                picname="chrbar.jpg",
@@ -310,25 +319,29 @@ chromosomePlotRect <- function(data,    # list of units to paint.
                                u="px",
                                reverse=FALSE)
 {
-  if (chrname == 0) {
+  if (is.null(chrname)) {
     chrname <- chromosomesName(reverse = reverse)    # chrname is the vector of chromosome names.
   }
-  startPicture(filename = picname,
-               width    = w,
-               height   = h,
-               units    = u)    #need dev.off() later
+  startPicture(
+      filename = picname,
+      width    = w,
+      height   = h,
+      units    = u
+  )    #need dev.off() later
   basepairlength <- max(reference[, "length"])    # length of chr1 the longest.
   rectheight <- basepairlength/96    # height of rectangules.
   #### Paint blank plot
-  plot(0,
-       0,
-       type = "n",
-       xlim = c(0, basepairlength),
-       ylim = c(0, rectheight * length(chrname) * 2),
-       col  = "white",
-       xlab = "",
-       ylab = "",
-       axes = FALSE)
+  plot(
+      0,
+      0,
+      type="n",
+      xlim=c(0, basepairlength),
+      ylim=c(0, rectheight * length(chrname) * 2),
+      col="white",
+      xlab="",
+      ylab="",
+      axes=FALSE
+  )
   #par(new = TRUE)
   #### Paint chromosomes with information
   for (n in c(1:length(chrname))) {
@@ -336,50 +349,85 @@ chromosomePlotRect <- function(data,    # list of units to paint.
     lefty <- rectheight * 2 * (n - 1)
     ### Paint chromosome
     ## Chromosome part before centromere
-    rect(xleft    = 0,  #left bottom x
-         ybottom  = lefty + 0.25 * rectheight,    # left bottom y.
-         xright   = reference[reference$chromosome == chrname[n], "centromerestart"],    # right top x.
-         ytop     = righty - 0.25 * rectheight,    # right top y.
-         col      = chrcol,
-         border   = chrcol)
+    rect(
+        xleft=0,  #left bottom x
+        ybottom=lefty + 0.25 * rectheight,    # left bottom y.
+        xright=reference[reference$chromosome == chrname[n], "centromerestart"],    # right top x.
+        ytop=righty - 0.25 * rectheight,    # right top y.
+        col=chrcol,
+        border=chrcol
+    )
     ## Chromosome part after centromere
-    rect(xleft    = reference[reference$chromosome == chrname[n], "centromereend"],    # left bottom x.
-         ybottom  = lefty + 0.25 * rectheight,    # left bottom y
-         xright   = reference[reference$chromosome == chrname[n], "length"],    # right top x.
-         ytop     = righty - 0.25 * rectheight,    # right top y.
-         col      = chrcol,
-         border   = chrcol)
+    rect(
+        xleft=reference[reference$chromosome == chrname[n], "centromereend"],    # left bottom x.
+        ybottom=lefty + 0.25 * rectheight,    # left bottom y
+        xright=reference[reference$chromosome == chrname[n], "length"],    # right top x.
+        ytop=righty - 0.25 * rectheight,    # right top y.
+        col=chrcol,
+        border=chrcol
+    )
+
     ### Paint centromeres
-    rect(xleft    = reference[reference$chromosome == chrname[n], "centromerestart"],
-         ybottom  = lefty + 0.25 * rectheight,
-         xright   = reference[reference$chromosome == chrname[n], "centromereend"],
-         ytop     = righty - 0.25 * rectheight,
-         col      = cencol,
-         border   = cencol)
+    rect(
+        xleft=reference[reference$chromosome == chrname[n], "centromerestart"],
+        ybottom=lefty + 0.3 * rectheight,
+        xright=reference[reference$chromosome == chrname[n], "centromereend"],
+        ytop=righty - 0.3 * rectheight,
+        col=cencol,
+        border=cencol
+    )
+    ## chromosome round end
+    points(
+        x=c(
+            0,
+            reference[reference$chromosome == chrname[n], "centromerestart"],
+            reference[reference$chromosome == chrname[n], "centromereend"],
+            reference[reference$chromosome == chrname[n], "length"]
+        ),
+        y=c(
+            lefty + 0.5 * rectheight,
+            righty - 0.5 * rectheight,
+            lefty + 0.5 * rectheight,
+            righty - 0.5 * rectheight
+        ),    # left bottom y
+        col=chrcol,
+        pch=19,
+        cex=1
+    )
     ### Paint data regions
     for (m in c(1:length(data))) {
-      rect(xleft    = data[[m]][data[[m]]$chromosome == chrname[n], "start"],
-           ybottom  = lefty,
-           xright   = data[[m]][data[[m]]$chromosome == chrname[n], "end"],
-           ytop     = righty,
-           col      = datacol[m],
-           border   = datacol[m])
+        if (!chrname[n] %in% unique(data[[m]]$chromosome)) {
+            next
+        }
+        rect(
+            xleft=data[[m]][data[[m]]$chromosome == chrname[n], "start"],
+            ybottom=lefty,
+            xright=data[[m]][data[[m]]$chromosome == chrname[n], "end"],
+            ytop=righty,
+            col=datacol[m],
+            border=datacol[m]
+        )
     }
   }
   #### Add label for chromosomes
-  text(x      = -rectheight * 3,
-       y      = ((1:length(chrname)) * 4 - 3) * 0.5 * rectheight,
-       labels = substr(chrname, 4, 6), 
-       cex    = 1.1)
+  text(
+      x=-rectheight * 3,
+      y=((1:length(chrname)) * 4 - 3) * 0.5 * rectheight,
+      labels=substr(chrname, 4, 6),
+      cex=1.1
+  )
   #### Legend.
-  legend("right",
-         legend = c(names(data)[1:length(data)], "centromere"),
-         pch    = 15,
-         col    = c(datacol[1:length(data)], cencol),
-         border = "white",
-         cex    = 1.5)
+  legend(
+      "right",
+      legend=c(names(data)[1:length(data)], "Centromere"),
+      pch=15,
+      col=c(datacol[1:length(data)], cencol),
+      border="white",
+      cex=1.5
+  )
   dev.off()
 }
+
 
 
 ##### Function-chromosomePlotLine: paint chromomes with reads using lines.
@@ -498,7 +546,7 @@ chromosomePlotBin <- function(binread,    # bin reads data, [chromosome][start][
       layout(matrix(1:length(chrname), prow, pcol))    # setting one file to be separate into several place.
       chrs = chrname    # reset chrs to chrname.
     }
-    for ( chri in chrs) {
+    for (chri in chrs) {
       reads <- dataMerge(binread,chri)
       limcount <- summary(reads$count)[5]
       #reads[reads$count > limcount, 3] <- limcount    # limit the reads count.
