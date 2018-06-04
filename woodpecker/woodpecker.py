@@ -2,8 +2,8 @@
 # Woodpecker
 # ------------------
 # Author: Wolfson Liu
-# Date: 2017.12.11
-# Version: 0.1.2017.12.11
+# Date: 2018.06.04
+# Version: 0.2.2018.06.04
 # Description:
 #    Used for dowloading multiple papers in GUI.
 # ------------------
@@ -26,15 +26,16 @@ class ArticleNotFound(ValueError):
 
 # ------------------
 
-scihubs = [
-    'http://www.sci-hub.tw/',
-    'http://www.sci-hub.hk/',
-    'http://www.sci-hub.cc/',
-    'http://www.sci-hub.bz/',
-]
 
 
-def getscihub(scihubs):
+def getscihub():
+    scihubs = [
+        'http://www.sci-hub.tw/',
+        'http://www.sci-hub.hk/',
+        'http://www.sci-hub.cc/',
+        'http://www.sci-hub.bz/',
+    ]
+
     for sh in scihubs:
         try:
             shpage = requests.get(sh)
@@ -53,7 +54,7 @@ def scihub_pdfurl(doi, scihub):
         raise ArticleNotFound()
     else:
         shparse = bs4.BeautifulSoup(shpage.text)
-        return 'http://' + shparse.body.find(
+        return shparse.body.find(
             'iframe',
             attrs={'id': 'pdf'}
         ).get('src').lstrip('/')
@@ -157,7 +158,7 @@ class Woodpecker(tk.Frame):
         self.data['dir'] = self.path_entry.get()
         self.data['scihub'] = self.scihub_entry.get()
         if self.data['scihub'] == '':
-            self.data['scihub'] = getscihub(scihubs)
+            self.data['scihub'] = getscihub()
         elif (self.data['scihub'].find('http://') < 0) and (self.data['scihub'].find('https://') < 0):
             self.data['scihub'] = 'https://' + self.data['scihub']
             self.data['scihub'] = self.data['scihub'].replace('www.', '')
@@ -167,7 +168,9 @@ class Woodpecker(tk.Frame):
             try:
                 try:
                     pdfurl = scihub_pdfurl(doi, self.data['scihub'])
+                    print(pdfurl)
                     pdf = requests.get(pdfurl)
+                    print(pdf)
                     pdfname = os.path.join(
                         self.data['dir'],
                         doi.replace('/', '') + '.pdf'
