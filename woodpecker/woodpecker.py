@@ -168,6 +168,8 @@ class Woodpecker(tk.Frame):
             try:
                 try:
                     pdfurl = scihub_pdfurl(doi, self.data['scihub'])
+                    if (pdfurl.find('http://') < 0) and (pdfurl.find('https://') < 0):
+                        pdfurl = 'https://' + pdfurl
                     print(pdfurl)
                     pdf = requests.get(pdfurl)
                     print(pdf)
@@ -204,6 +206,7 @@ class Woodpecker(tk.Frame):
                 )
             finally:
                 pass
+            time.sleep(2)
         with open(
                 os.path.join(self.data['dir'], 'woodpecker.log'), 'a'
         ) as f:
